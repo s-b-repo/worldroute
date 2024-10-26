@@ -72,3 +72,22 @@ Run the filter script to create a new file, public_ips.txt, containing only publ
 Contribution
 
 Feel free to suggest improvements, report issues, or contribute new features!
+
+
+pip install openpyxl requests
+
+Explanation of Changes
+
+    verify_proxy Function: This function takes an IP and port, attempts an HTTP request through the given IP/port as a proxy, and confirms if the request is successful. A successful request means the IP/port is functioning as a proxy.
+    scan_ip Modification: The scan_ip function now calls verify_proxy for each open port detected by nmap. Only if the verify_proxy function succeeds does the IP get flagged as a proxy.
+    Excel Output: The openpyxl library is used to save the results in an Excel spreadsheet. Each IP and its result (indicating proxy status and open ports) are saved in a row.
+
+Running the Script
+
+    Place all IPs in ip_list.txt, one IP per line.
+    Run the script.
+    The results will be saved in proxy_scan_results.xlsx.
+
+This approach allows you to identify proxies effectively and saves results in an organized format for easy review.
+
+
