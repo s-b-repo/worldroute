@@ -57,3 +57,14 @@ IP Address,Successful Exploit
 192.168.1.2,"Exploit ABC successful on port 443"
 
 This CSV can then be imported directly into any spreadsheet software for further analysis.
+
+
+Explanation of the Changes:
+
+    is_public_ip() function: Filters out all private, reserved, and special-use IP addresses, including:
+        Private ranges: 10.x.x.x, 172.16.x.x - 172.31.x.x, and 192.168.x.x
+        Loopback: 127.x.x.x
+        Link-local: 169.254.x.x
+        Multicast and reserved ranges: 224.x.x.x - 255.x.x.x
+
+After running this script, public_ips.txt will contain only public IP addresses, each on a new line.
