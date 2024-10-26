@@ -1,14 +1,3 @@
-import re
-
-def extract_public_ips(text):
-    # Regex to match valid IPv4 addresses
-    ip_pattern = r'\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b'
-    ips = re.findall(ip_pattern, text)
-
-    # Filter only public IPs
-    public_ips = [ip for ip in ips if is_public_ip(ip)]
-    return public_ips
-
 def is_public_ip(ip):
     # Convert IP address to integers for each octet
     octets = list(map(int, ip.split('.')))
@@ -25,23 +14,28 @@ def is_public_ip(ip):
         return False
     return True
 
-def save_ips_to_file(ips, filename='public_ips.txt'):
-    with open(filename, 'w') as file:
-        for ip in ips:
+def generate_all_public_ips():
+    """Generator to produce all public IPv4 addresses."""
+    for a in range(1, 224):            # Avoid reserved multicast (224.0.0.0 and above)
+        for b in range(0, 256):
+            for c in range(0, 256):
+                for d in range(1, 255): # Skip .0 and .255 (reserved network and broadcast addresses)
+                    ip = f"{a}.{b}.{c}.{d}"
+                    if is_public_ip(ip):
+                        yield ip
+
+# Save public IPs to file in chunks, appending instead of overwriting
+def save_all_public_ips(filename='all_public_ips.txt', chunk_size=1000000):
+    with open(filename, 'a') as file:  # 'a' mode for appending
+        count = 0
+        for ip in generate_all_public_ips():
             file.write(ip + '\n')
-    print(f"Public IPs saved to {filename}")
+            count += 1
+            if count % chunk_size == 0:
+                print(f"{count} IPs appended to {filename}...")
 
-# Example usage:
-text = """
-Here is a list of IPs:
-192.168.1.1
-10.0.0.1
-8.8.8.8
-172.16.0.1
-203.0.113.5
-127.0.0.1
-169.254.0.1
-"""
+    print(f"Completed appending all public IPs to {filename}")
 
-public_ips = extract_public_ips(text)
-save_ips_to_file(public_ips)
+# Start the process (warning: this will be extensive)
+# Uncomment the line below to run the full generation.
+# save_all_public_ips()
