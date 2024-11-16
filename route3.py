@@ -7,7 +7,6 @@ import sys
 from asyncio import Semaphore
 from pathlib import Path
 from aiofiles import open as aio_open
-from aiofiles.csv import writer as async_csv_writer
 
 # Configuration
 MAX_CONCURRENT_TASKS = 30
@@ -80,7 +79,7 @@ async def process_ips_concurrently(file_path: str, output_csv: str, semaphore: S
     buffer = []
 
     async with aio_open(output_csv, mode="a", newline="") as file:
-        async_writer = async_csv_writer(file)
+        writer = csv.writer(await file.__aenter__())  # Use synchronous writer for CSV
 
         async with aio_open(file_path, mode="r") as input_file:
             tasks = []
@@ -92,7 +91,7 @@ async def process_ips_concurrently(file_path: str, output_csv: str, semaphore: S
 
                 # Write batch to CSV if buffer exceeds threshold
                 if len(buffer) >= WRITE_BATCH_SIZE:
-                    await async_writer.writerows(buffer)
+                    writer.writerows(buffer)
                     buffer.clear()
 
                 # Gather tasks when they reach concurrency limit
@@ -104,7 +103,7 @@ async def process_ips_concurrently(file_path: str, output_csv: str, semaphore: S
             if tasks:
                 await asyncio.gather(*tasks)
             if buffer:
-                await async_writer.writerows(buffer)
+                writer.writerows(buffer)
 
     logging.info("Completed processing all IPs from file.")
 
@@ -115,11 +114,11 @@ async def main():
 
     ip_list_file = sys.argv[1]
     output_csv = generate_unique_filename("routersploit_vulnerable_results.csv")
-    
+
     # Create the CSV file with headers
     async with aio_open(output_csv, mode="w", newline="") as file:
-        async_writer = async_csv_writer(file)
-        await async_writer.writerow(["IP Address", "Vulnerability Details"])
+        writer = csv.writer(await file.__aenter__())
+        writer.writerow(["IP Address", "Vulnerability Details"])
 
     logging.info(f"Created CSV file with headers: {output_csv}")
 
