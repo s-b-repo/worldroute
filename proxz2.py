@@ -56,12 +56,15 @@ def process_ip_batch(ips, port, protocol, executor, timeout):
 def get_last_processed_line(progress_file):
     """
     Retrieve the last processed line number from the progress file.
+    Ensures valid content is read and defaults to 0 on failure.
     """
-    if os.path.exists(progress_file):
-        with open(progress_file, "r") as file:
-            line = file.readline().strip()
-            if line.isdigit():
-                return int(line)
+    try:
+        if os.path.exists(progress_file):
+            with open(progress_file, "r") as file:
+                line = file.readline().strip()
+                return int(line) if line.isdigit() else 0
+    except Exception as e:
+        logging.warning(f"Error reading progress file: {e}")
     return 0
 
 def update_progress(progress_file, line_num):
@@ -138,6 +141,6 @@ if __name__ == "__main__":
     scan_port = 8080          # Port to scan (default: 8080)
     scan_protocol = "http"    # Protocol to use (http or https)
     batch_size = 10000         # Number of IPs to process per batch
-    progress_file = "scan_progress.txt"  # Progress tracking file
+    progress_file = "scan_progress_proxy.txt"  # Progress tracking file
 
     scan_ips(ip_list_file, port=scan_port, protocol=scan_protocol, batch_size=batch_size, progress_file=progress_file)
