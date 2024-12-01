@@ -33,7 +33,7 @@ def check_proxy(ip, port=8080, protocol="http", timeout=5):
             logging.info(result)
 
             with write_lock:
-                with open("successful_proxies.txt", "a") as success_file:
+                with open("successful_proxies.txt", "a") as success_file:  # Changed to "a" for appending
                     success_file.write(f"{ip}:{port}\n")
 
             return result
@@ -62,7 +62,8 @@ def get_last_processed_line(progress_file):
         if os.path.exists(progress_file):
             with open(progress_file, "r") as file:
                 line = file.readline().strip()
-                return int(line) if line.isdigit() else 0
+                if line.isdigit():
+                    return int(line)
     except Exception as e:
         logging.warning(f"Error reading progress file: {e}")
     return 0
@@ -71,8 +72,11 @@ def update_progress(progress_file, line_num):
     """
     Update the progress file with the current line number.
     """
-    with open(progress_file, "w") as file:
-        file.write(f"{line_num}\n")
+    try:
+        with open(progress_file, "w") as file:
+            file.write(f"{line_num}\n")
+    except Exception as e:
+        logging.warning(f"Error updating progress file: {e}")
 
 def log_progress(current_line, total_lines):
     """
@@ -89,8 +93,7 @@ def scan_ips(file_path, port=8080, protocol="http", batch_size=10000, progress_f
     Optimized for very large files (e.g., 50GB).
     """
     try:
-        open("successful_proxies.txt", "w").close()
-
+        # Do not overwrite successful proxies, open in append mode
         last_processed_line = get_last_processed_line(progress_file)
         print(f"Resuming from line {last_processed_line + 1}...")
 
@@ -129,7 +132,7 @@ def scan_ips(file_path, port=8080, protocol="http", batch_size=10000, progress_f
             if batch:
                 process_ip_batch(batch, port, protocol, executor, timeout)
 
-            update_progress(progress_file, line_num)
+            update_progress(progress_file, current_line[0])
         print("Scanning completed. Check 'successful_proxies.txt' for results.")
     except FileNotFoundError:
         print(f"File not found: {file_path}")
